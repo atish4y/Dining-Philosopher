@@ -1,4 +1,3 @@
-# Dining-Philosopher
 
 # 🍽️ Dining Philosophers Problem — Monitor-Based Visualization
 
