@@ -55,12 +55,12 @@ It’s an ideal project for understanding and visualizing the **Monitor-based sy
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/dining-philosophers-monitor.git
+   git clone https://github.com/atish4y/dining-philosopher.git
 Navigate to the Project Folder
 
 bash
 Copy code
-cd dining-philosophers-monitor
+cd dining-philosopher
 Open the HTML File
 
 bash
