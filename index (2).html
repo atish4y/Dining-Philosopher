@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dining Philosophers - Monitor Solution</title>
+    <style>
+        :root {
+            --color-background: #1a1a1a;
+            --color-surface: #262626;
+            --color-text: #f5f5f5;
+            --color-text-secondary: #a7a9a9;
+            --color-primary: #32b8c6;
+            --color-primary-hover: #2da6b2;
+            --color-border: rgba(119, 124, 124, 0.3);
+            --color-thinking: #e67961;
+            --color-hungry: #e6a061;
+            --color-eating: #32b8c6;
+            --color-chopstick-free: #626c71;
+            --color-chopstick-used: #32b8c6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--color-text-secondary);
+            font-size: 14px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .canvas-section {
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .control-panel {
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .control-section {
+            margin-bottom: 24px;
+        }
+
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px 16px;
+            background-color: var(--color-primary);
+            color: var(--color-background);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        button:hover {
+            background-color: var(--color-primary-hover);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background-color: rgba(119, 124, 124, 0.15);
+            color: var(--color-text);
+        }
+
+        button.secondary:hover {
+            background-color: rgba(119, 124, 124, 0.25);
+        }
+
+        .step-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--color-text-secondary);
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            color: var(--color-text);
+            font-size: 14px;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 0;
+        }
+
+        .status-section {
+            background-color: var(--color-background);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+
+        .status-label {
+            color: var(--color-text-secondary);
+        }
+
+        .status-value {
+            font-weight: 500;
+            font-family: 'Courier New', monospace;
+        }
+
+        .legend-section {
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border);
+        }
+
+        .legend-text {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        .log-section {
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 30px;
+        }
+
+        .log-container {
+            background-color: var(--color-background);
+            border-radius: 8px;
+            padding: 16px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            padding: 4px 0;
+            color: var(--color-text-secondary);
+        }
+
+        .log-entry.current {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dining Philosophers Problem</h1>
+            <p class="subtitle">Monitor-Based Synchronization Solution</p>
+        </header>
+
+        <div class="main-grid">
+            <div class="canvas-section">
+                <canvas id="simulationCanvas" width="600" height="600"></canvas>
+            </div>
+
+            <div class="control-panel">
+                <div class="control-section">
+                    <h3>Simulation Controls</h3>
+                    <div class="button-group">
+                        <button id="startBtn">Start</button>
+                        <button id="resetBtn" class="secondary">Reset</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Step Controls</h3>
+                    <div class="step-controls">
+                        <button id="stepBackBtn" class="secondary">← Previous</button>
+                        <button id="stepForwardBtn" class="secondary">Next →</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Parameters</h3>
+                    <div class="input-group">
+                        <label for="thinkTime">Think Time (ms)</label>
+                        <input type="number" id="thinkTime" value="1000" min="100" max="5000" step="100">
+                    </div>
+                    <div class="input-group">
+                        <label for="eatTime">Eat Time (ms)</label>
+                        <input type="number" id="eatTime" value="1500" min="100" max="5000" step="100">
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Status</h3>
+                    <div class="status-section">
+                        <div class="status-item">
+                            <span class="status-label">Current Step</span>
+                            <span class="status-value" id="currentStep">0</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Total Steps</span>
+                            <span class="status-value" id="totalSteps">0</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Simulation State</span>
+                            <span class="status-value" id="simState">Ready</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend-section">
+            <h3 style="margin-bottom: 16px; font-size: 14px; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">State Legend</h3>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--color-thinking);"></div>
+                    <span class="legend-text">Thinking</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--color-hungry);"></div>
+                    <span class="legend-text">Hungry (Waiting)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--color-eating);"></div>
+                    <span class="legend-text">Eating</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--color-chopstick-free);"></div>
+                    <span class="legend-text">Chopstick Available</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--color-chopstick-used);"></div>
+                    <span class="legend-text">Chopstick In Use</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="log-section">
+            <h3 style="margin-bottom: 16px; font-size: 14px; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Execution Log</h3>
+            <div class="log-container" id="logContainer"></div>
+        </div>
+    </div>
+
+    <script>
+
+        // ============================================================================
+        // CANVAS CONFIGURATION
+        // ============================================================================
+        
+        // Get canvas element and 2D rendering context
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Define center point and radius for circular arrangement
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 200; // Distance from center to philosophers
+
+
+        // Philosopher states (enum-like constants)
+        const THINKING = 0; // Philosopher is thinking (not using chopsticks)
+        const HUNGRY = 1;   // Philosopher wants to eat (waiting for chopsticks)
+        const EATING = 2;   // Philosopher is eating (has both chopsticks)
+
+        // Human-readable state names for display
+        const stateNames = ['THINKING', 'HUNGRY', 'EATING'];
+        
+        // Color coding for visual representation
+        const stateColors = ['#e67961', '#e6a061', '#32b8c6'];
+
+
+        class DiningPhilosophersMonitor {
+
+            constructor() {
+                // Array of philosopher states (index = philosopher ID)
+                this.state = [THINKING, THINKING, THINKING, THINKING, THINKING];
+                
+                // Array of chopstick availability (true = available, false = in use)
+                this.chopsticks = [true, true, true, true, true];
+            }
+
+            /**
+             * Get left chopstick index for philosopher i
+             * @param {number} i - Philosopher index (0-4)
+             * @returns {number} - Left chopstick index
+             */
+            left(i) {
+                return i;
+            }
+
+            /**
+             * Get right chopstick index for philosopher i
+             * Uses modulo to wrap around the circular table
+             * @param {number} i - Philosopher index (0-4)
+             * @returns {number} - Right chopstick index
+             */
+            right(i) {
+                return (i + 1) % 5;
+            }
+
+            /**
+             * Check if philosopher can eat
+             * Conditions: Must be HUNGRY and both adjacent chopsticks available
+             * @param {number} i - Philosopher index
+             * @returns {boolean} - True if philosopher can eat
+             */
+            canEat(i) {
+                return this.state[i] === HUNGRY &&
+                       this.chopsticks[this.left(i)] &&
+                       this.chopsticks[this.right(i)];
+            }
+
+            /**
+             * Test if philosopher can transition to EATING state
+             * If conditions met, allocate chopsticks and change state
+             * @param {number} i - Philosopher index
+             * @returns {boolean} - True if successfully transitioned to EATING
+             */
+            test(i) {
+                if (this.canEat(i)) {
+                    // Transition to EATING state
+                    this.state[i] = EATING;
+                    
+                    // Mark both chopsticks as in use
+                    this.chopsticks[this.left(i)] = false;
+                    this.chopsticks[this.right(i)] = false;
+                    
+                    return true;
+                }
+                return false;
+            }
+
+            /**
+             * Philosopher attempts to pick up chopsticks
+             * Entry protocol for the monitor
+             * @param {number} i - Philosopher index
+             * @returns {boolean} - True if immediately acquired chopsticks
+             */
+            pickupChopsticks(i) {
+                // Set state to HUNGRY (philosopher wants to eat)
+                this.state[i] = HUNGRY;
+                
+                // Test if can immediately transition to EATING
+                return this.test(i);
+            }
+
+            /**
+             * Philosopher puts down chopsticks after eating
+             * Exit protocol for the monitor
+             * Releases resources and checks if neighbors can now eat
+             * @param {number} i - Philosopher index
+             */
+            putdownChopsticks(i) {
+                // Transition back to THINKING state
+                this.state[i] = THINKING;
+                
+                // Release both chopsticks (make available)
+                this.chopsticks[this.left(i)] = true;
+                this.chopsticks[this.right(i)] = true;
+                
+                // Check if left neighbor can now eat (fairness)
+                const leftNeighbor = (i + 4) % 5;
+                this.test(leftNeighbor);
+                
+                // Check if right neighbor can now eat (fairness)
+                const rightNeighbor = (i + 1) % 5;
+                this.test(rightNeighbor);
+            }
+        }
+
+
+        let monitor = new DiningPhilosophersMonitor();
+        
+        // Array storing complete execution trace for step-by-step navigation
+        let executionSteps = [];
+        
+        // Current position in execution trace (for step forward/backward)
+        let currentStepIndex = -1;
+        
+        // Flag indicating if simulation has been started
+        let isSimulating = false;
+
+        // ============================================================================
+        // UI ELEMENT REFERENCES
+        // ============================================================================
+        
+        // Cache DOM element references for performance
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const stepBackBtn = document.getElementById('stepBackBtn');
+        const stepForwardBtn = document.getElementById('stepForwardBtn');
+        const thinkTimeInput = document.getElementById('thinkTime');
+        const eatTimeInput = document.getElementById('eatTime');
+        const currentStepDisplay = document.getElementById('currentStep');
+        const totalStepsDisplay = document.getElementById('totalSteps');
+        const simStateDisplay = document.getElementById('simState');
+        const logContainer = document.getElementById('logContainer');
+
+
+        function generateSimulationSteps() {
+            // Clear previous execution trace
+            executionSteps = [];
+            
+            // Create temporary monitor for generating trace
+            const tempMonitor = new DiningPhilosophersMonitor();
+            
+
+            const sequence = [
+                {philosopher: 0, action: 'pickup'},
+                {philosopher: 2, action: 'pickup'},
+                {philosopher: 4, action: 'pickup'},
+                {philosopher: 1, action: 'pickup'},
+                {philosopher: 3, action: 'pickup'},
+                {philosopher: 0, action: 'putdown'},
+                {philosopher: 1, action: 'pickup'},
+                {philosopher: 2, action: 'putdown'},
+                {philosopher: 3, action: 'pickup'},
+                {philosopher: 4, action: 'putdown'},
+                {philosopher: 1, action: 'putdown'},
+                {philosopher: 3, action: 'putdown'},
+            ];
+
+            // Record initial state (Step 0)
+            executionSteps.push({
+                state: [...tempMonitor.state],
+                chopsticks: [...tempMonitor.chopsticks],
+                log: 'Initial state: All philosophers thinking'
+            });
+
+            // Process each action in the sequence
+            sequence.forEach(({philosopher, action}) => {
+                if (action === 'pickup') {
+                    const success = tempMonitor.pickupChopsticks(philosopher);
+                    executionSteps.push({
+                        state: [...tempMonitor.state],
+                        chopsticks: [...tempMonitor.chopsticks],
+                        log: success ? 
+                            `P${philosopher}: Acquired chopsticks, now EATING` :
+                            `P${philosopher}: Waiting for chopsticks (HUNGRY)`
+                    });
+                } else {
+                    tempMonitor.putdownChopsticks(philosopher);
+                    executionSteps.push({
+                        state: [...tempMonitor.state],
+                        chopsticks: [...tempMonitor.chopsticks],
+                        log: `P${philosopher}: Released chopsticks, now THINKING`
+                    });
+                }
+            });
+
+            // Update UI with total step count
+            totalStepsDisplay.textContent = executionSteps.length - 1;
+        }
+
+
+        function draw() {
+            // Clear canvas for redrawing
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Get current execution step state
+            const step = executionSteps[currentStepIndex] || executionSteps[0];
+            
+            // ========================================
+            // RENDER PHILOSOPHERS
+            // ========================================
+            for (let i = 0; i < 5; i++) {
+                // Calculate position on circle (72° apart, starting from top)
+                const angle = (i * 72 - 90) * Math.PI / 180;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                
+                // Draw philosopher circle (color based on current state)
+                ctx.beginPath();
+                ctx.arc(x, y, 40, 0, 2 * Math.PI);
+                ctx.fillStyle = stateColors[step.state[i]];
+                ctx.fill();
+                ctx.strokeStyle = '#1a1a1a';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Philosopher label
+                ctx.fillStyle = '#1a1a1a';
+                ctx.font = '600 18px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`P${i}`, x, y);
+                
+                // State text
+                ctx.fillStyle = '#f5f5f5';
+                ctx.font = '500 11px sans-serif';
+                const stateName = stateNames[step.state[i]];
+                ctx.fillText(stateName, x, y + 60);
+            }
+            
+            // ========================================
+            // RENDER CHOPSTICKS
+            // ========================================
+            for (let i = 0; i < 5; i++) {
+                // Position chopsticks between philosophers (36° offset)
+                const angle = (i * 72 - 90 + 36) * Math.PI / 180;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                
+                // Draw chopstick circle (color shows availability)
+                ctx.beginPath();
+                ctx.arc(x, y, 15, 0, 2 * Math.PI);
+                ctx.fillStyle = step.chopsticks[i] ? '#626c71' : '#32b8c6';
+                ctx.fill();
+                ctx.strokeStyle = '#1a1a1a';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Chopstick label
+                ctx.fillStyle = '#1a1a1a';
+                ctx.font = '600 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`C${i}`, x, y);
+            }
+        }
+
+
+        function updateLog() {
+            logContainer.innerHTML = '';
+            executionSteps.forEach((step, index) => {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry' + (index === currentStepIndex ? ' current' : '');
+                entry.textContent = `[Step ${index}] ${step.log}`;
+                logContainer.appendChild(entry);
+            });
+            if (currentStepIndex >= 0) {
+                const currentEntry = logContainer.children[currentStepIndex];
+                if (currentEntry) {
+                    currentEntry.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+        }
+
+        function stepForward() {
+            if (currentStepIndex < executionSteps.length - 1) {
+                currentStepIndex++;
+                currentStepDisplay.textContent = currentStepIndex;
+                draw();
+                updateLog();
+                updateButtonStates();
+            }
+        }
+
+
+        function stepBackward() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                currentStepDisplay.textContent = currentStepIndex;
+                draw();
+                updateLog();
+                updateButtonStates();
+            }
+        }
+
+
+        function updateButtonStates() {
+            stepBackBtn.disabled = currentStepIndex <= 0;
+            stepForwardBtn.disabled = currentStepIndex >= executionSteps.length - 1;
+        }
+
+        // ============================================================================
+        // EVENT HANDLERS
+        // ============================================================================
+
+        startBtn.addEventListener('click', () => {
+            if (!isSimulating) {
+                generateSimulationSteps();
+                currentStepIndex = 0;
+                currentStepDisplay.textContent = currentStepIndex;
+                simStateDisplay.textContent = 'Running';
+                draw();
+                updateLog();
+                updateButtonStates();
+                isSimulating = true;
+            }
+        });
+
+
+        resetBtn.addEventListener('click', () => {
+            monitor = new DiningPhilosophersMonitor();
+            executionSteps = [];
+            currentStepIndex = -1;
+            currentStepDisplay.textContent = '0';
+            totalStepsDisplay.textContent = '0';
+            simStateDisplay.textContent = 'Ready';
+            logContainer.innerHTML = '';
+            isSimulating = false;
+            generateSimulationSteps();
+            currentStepIndex = 0;
+            draw();
+            updateLog();
+            updateButtonStates();
+        });
+
+        /**
+         * STEP FORWARD BUTTON: Move to next execution step
+         */
+        stepForwardBtn.addEventListener('click', stepForward);
+        
+        /**
+         * STEP BACKWARD BUTTON: Move to previous execution step
+         */
+        stepBackBtn.addEventListener('click', stepBackward);
+
+        generateSimulationSteps();
+        currentStepIndex = 0;
+        draw();
+        updateLog();
+        updateButtonStates();
+    </script>
+</body>
+</html>
